@@ -28,6 +28,7 @@ class nagios::params {
             $nrpe_group         = 'nagios'
             $nrpe_pid_file      = '/var/run/nrpe/nrpe.pid'
             $nrpe_cfg_dir       = '/etc/nagios/nrpe.d'
+            $nagios_cfg_dir     = '/etc/nagios/objects'
         }
         'Fedora': {
             $nrpe_package       = [ 'nrpe', 'nagios-plugins' ]
@@ -35,6 +36,7 @@ class nagios::params {
             $nrpe_group         = 'nrpe'
             $nrpe_pid_file      = '/var/run/nrpe.pid'
             $nrpe_cfg_dir       = '/etc/nrpe.d'
+            $nagios_cfg_dir     = '/etc/nagios/objects'
         }
         default: {
             $nrpe_package       = [ 'nrpe', 'nagios-plugins' ]
@@ -42,6 +44,7 @@ class nagios::params {
             $nrpe_group         = 'nrpe'
             $nrpe_pid_file      = '/var/run/nrpe.pid'
             $nrpe_cfg_dir       = '/etc/nagios/nrpe.d'
+            $nagios_cfg_dir     = '/etc/nagios/objects'
         }
     }
     # Optional plugin packages, to be realized by tag where needed
@@ -68,30 +71,33 @@ class nagios::params {
         'nagios-plugins-swap',
         'nagios-plugins-users',
     ]
-    case $operatingsystem {
-        'Fedora': {
+    case $::osfamily {
+        'redhat': {
             $plugin_dir = "/usr/${libdir}/nagios/plugins"
             @package { $nagios_plugins_packages:
                 tag    => $name,
-                ensure => installed,
-            }
-        }
-        'Gentoo': {
-            $plugin_dir = "/usr/${libdir}/nagios/plugins"
-            # No package splitting in Gentoo
-            @package { 'net-analyzer/nagios-plugins':
-                tag    => $nagios_plugins_packages,
                 ensure => installed,
             }
         }
         default: {
-            $plugin_dir = '/usr/libexec/nagios/plugins'
-            @package { $nagios_plugins_packages:
-                tag    => $name,
-                ensure => installed,
+            case $operatingsystem {
+                'Gentoo': {
+                    $plugin_dir = "/usr/${libdir}/nagios/plugins"
+                    # No package splitting in Gentoo
+                    @package { 'net-analyzer/nagios-plugins':
+                        tag    => $nagios_plugins_packages,
+                        ensure => installed,
+                    }
+                }
+                default: {
+                    $plugin_dir = '/usr/libexec/nagios/plugins'
+                    @package { $nagios_plugins_packages:
+                        tag    => $name,
+                        ensure => installed,
+                    }
+                }
             }
         }
     }
-
 }
 

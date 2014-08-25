@@ -17,7 +17,6 @@ define nagios::service (
     $use                 = $nagios::client::service_use,
     $ensure              = undef
 ) {
-
     # Work around being passed undefined variables resulting in ''
     $final_check_period = $check_period ? {
         ''      => $nagios::client::service_check_period,
@@ -49,6 +48,7 @@ define nagios::service (
         # Support an arrays of tags for multiple nagios servers
         tag                 => regsubst($server,'^(.+)$','nagios-\1'),
         ensure              => $ensure,
+        target              => "${::nagios::client::nagios_target_dir}/${service_description}.cfg",
     }
 
 }

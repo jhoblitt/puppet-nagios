@@ -36,6 +36,7 @@ class nagios::client (
     $service_use                 = 'generic-service',
     # other
     $plugin_dir                  = $nagios::params::plugin_dir,
+    $nagios_cfg_dir              = $::nagios::params::nagios_cfg_dir,
     $selinux                     = true
 ) inherits nagios::params {
 
@@ -80,6 +81,7 @@ class nagios::client (
         ensure  => directory,
         require => Package['nrpe'],
     }
+
     # Create resource for the check_* parent resource
     file { $nagios::client::plugin_dir:
         ensure  => directory,
@@ -94,8 +96,15 @@ class nagios::client (
         require => Package['nrpe'],
     }
 
+    $nagios_target_dir = "${::nagios::client::nagios_cfg_dir}/${::hostname}"
+
+    @@file { $nagios_target_dir:
+        ensure  => directory,
+        tag     => regsubst($server,'^(.+)$','nagios-\1'),
+    }
+
     # The main nagios_host entry
-    nagios::host { $host_name:
+    @@nagios::host { $host_name:
         server              => $server,
         address             => $host_address,
         host_alias          => $host_alias,
@@ -107,6 +116,7 @@ class nagios::client (
         notes_url           => $host_notes_url,
         notification_period => $host_notification_period,
         use                 => $host_use,
+        tag     => regsubst($server,'^(.+)$','nagios-\1'),
     }
 
     # TODO: Remove once all check/*.pp files are updated
@@ -115,17 +125,17 @@ class nagios::client (
     }
 
     # Enable all default checks by... default
-    include nagios::defaultchecks
+#    include nagios::defaultchecks
     # Default checks, enabled on all hosts
-    nagios::check::cpu { $host_name: }
-    nagios::check::disk { $host_name: }
-    if $::nagios_httpd == 'true' {
-        nagios::check::httpd { $host_name: }
-    } else {
-        nagios::check::httpd { $host_name: ensure => absent }
-    }
-    nagios::check::load { $host_name: }
-    nagios::check::ping { $host_name: }
+#    nagios::check::cpu { $host_name: }
+#    nagios::check::disk { $host_name: }
+#    if $::nagios_httpd == 'true' {
+#        nagios::check::httpd { $host_name: }
+#    } else {
+#        nagios::check::httpd { $host_name: ensure => absent }
+#    }
+#    nagios::check::load { $host_name: }
+#    nagios::check::ping { $host_name: }
 
     # With selinux, many nrpe plugins require additional rules to work
     if $selinux and $::selinux_enforced {

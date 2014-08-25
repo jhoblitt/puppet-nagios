@@ -18,7 +18,11 @@ define nagios::host (
     $notes               = $nagios::client::host_notes,
     $notes_url           = $nagios::client::host_notes_url,
     $notification_period = $nagios::client::host_notification_period,
-    $use                 = $nagios::client::host_use
+    $use                 = $nagios::client::host_use,
+    $owner               = 'root',
+    $group               = 'root',
+    $mode                = '0644',
+    $target              = "${::nagios::client::nagios_target_dir}/host.cfg",
 ) {
 
     # Fallback to defaults here, no problems passing empty values for the rest
@@ -41,20 +45,28 @@ define nagios::host (
 #notice("final_address: ${final_address}")
 #notice("server: ${server}")
 
-    @@nagios_host { $title:
-        address             => $final_address,
-        alias               => $host_alias,
-        check_period        => $check_period,
-        check_command       => $check_command,
-        contact_groups      => $contact_groups,
-        hostgroups          => $hostgroups,
-        notes               => $final_notes,
-        notes_url           => $final_notes_url,
-        notification_period => $notification_period,
-        use                 => $final_use,
-        # Support an arrays of tags for multiple nagios servers
-        tag                 => regsubst($server,'^(.+)$','nagios-\1'),
-    }
+#    @@nagios_host { $title:
+#        address             => $final_address,
+#        alias               => $host_alias,
+#        check_period        => $check_period,
+#        check_command       => $check_command,
+#        contact_groups      => $contact_groups,
+#        hostgroups          => $hostgroups,
+#        notes               => $final_notes,
+#        notes_url           => $final_notes_url,
+#        notification_period => $notification_period,
+#        use                 => $final_use,
+#        # Support an arrays of tags for multiple nagios servers
+#        tag                 => regsubst($server,'^(.+)$','nagios-\1'),
+#        target              => "${::nagios::client::nagios_target_dir}/host.cfg",
+#    }
 
+  file { $target:
+    owner   => $owner,
+    group   => $group,
+    mode    => $mode,
+    content => template('nagios/host.erb'),
+    tag     => regsubst($server,'^(.+)$','nagios-\1'),
+  }
 }
 
